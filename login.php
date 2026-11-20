@@ -3,6 +3,7 @@ session_start();
 require 'db.php';
 
 $error = '';
+$fiche_courante = 'auth';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
@@ -37,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="auth-page">
 <?php require __DIR__ . '/app_header.php'; ?>
-    <div class="container">
+    <main class="container auth-card">
         <div class="logo">
             <div class="icon">🚢</div>
             <h1>Office de Route Matériel</h1>
@@ -52,12 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" action="">
             <div class="form-group">
-                <label>Adresse email</label>
-                <input type="email" name="email" placeholder="exemple@mail.com" required>
+                <label for="email">Adresse email</label>
+                <input id="email" type="email" name="email" placeholder="exemple@mail.com" required>
             </div>
             <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" name="password" placeholder="••••••••" required>
+                <label for="password">Mot de passe</label>
+                <input id="password" type="password" name="password" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn">Se connecter</button>
         </form>
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="link">
             Pas encore de compte ? <a href="register.php">S'inscrire</a>
         </div>
-    </div>
+    </main>
 <?php require 'footer.php'; ?>
 </body>
 </html>

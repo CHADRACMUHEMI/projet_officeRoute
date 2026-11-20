@@ -4,6 +4,7 @@ require 'db.php';
 
 $error = '';
 $success = '';
+$fiche_courante = 'auth';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nom = trim($_POST['nom']);
@@ -43,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="auth-page">
 <?php require __DIR__ . '/app_header.php'; ?>
-    <div class="container">
+    <main class="container auth-card">
         <div class="logo">
             <div class="icon">🚢</div>
             <h1>Office de Route Matériel</h1>
@@ -61,20 +62,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" action="">
             <div class="form-group">
-                <label>Nom</label>
-                <input type="text" name="nom" placeholder="Votre nom" required>
+                <label for="nom">Nom</label>
+                <input id="nom" type="text" name="nom" placeholder="Votre nom" required>
             </div>
             <div class="form-group">
-                <label>Prénom</label>
-                <input type="text" name="prenom" placeholder="Votre prénom" required>
+                <label for="prenom">Prénom</label>
+                <input id="prenom" type="text" name="prenom" placeholder="Votre prénom" required>
             </div>
             <div class="form-group">
-                <label>Adresse email</label>
-                <input type="email" name="email" placeholder="exemple@mail.com" required>
+                <label for="email">Adresse email</label>
+                <input id="email" type="email" name="email" placeholder="exemple@mail.com" required>
             </div>
             <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" name="password" placeholder="••••••••" required>
+                <label for="password">Mot de passe</label>
+                <input id="password" type="password" name="password" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn btn-orange">S'inscrire</button>
         </form>
@@ -82,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="link">
             Déjà un compte ? <a href="login.php">Se connecter</a>
         </div>
-    </div>
+    </main>
 <?php require 'footer.php'; ?>
 </body>
 </html>

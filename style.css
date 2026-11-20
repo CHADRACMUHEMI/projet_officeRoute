@@ -323,6 +323,28 @@ body:not(.report-page):not(.entry-page):not(.auth-page):not(.dashboard-page) .ap
     max-width: 900px;
 }
 
+.auth-page .app-header,
+.auth-page .auth-card {
+    max-width: 450px;
+}
+
+.auth-page .app-header {
+    margin-bottom: 0;
+}
+
+.auth-page .auth-card {
+    padding: clamp(24px, 5vw, 40px);
+    border-top: 5px solid #ff9a3c;
+}
+
+.auth-page .logo {
+    margin-bottom: 22px;
+}
+
+.auth-page .logo h1 {
+    font-size: clamp(22px, 6vw, 28px);
+}
+
 .report-page .no-print .fiche-nav {
     flex: 1 1 100%;
     width: 100%;

@@ -3,7 +3,7 @@
         <h1>GESTION DE RAPPORT MATERIELLE FLOTANT</h1>
     </div>
     <?php
-    if (($fiche_courante ?? '') !== 'dashboard') {
+    if (!in_array(($fiche_courante ?? ''), ['dashboard', 'auth'], true)) {
         require __DIR__ . '/navigation_fiches.php';
     }
     ?>
