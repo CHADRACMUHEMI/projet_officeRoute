@@ -3,7 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
-$mois_rapport = trim($_POST['mois_rapport'] ?? '');
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO consommation_bacs (
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'  => $mois_rapport,
+        ':mois_rapport'  => report_month_label($mois_rapport),
         ':item'          => $_POST['item'] ?? '',
         ':matricule'     => $_POST['matricule'] ?? '',
         ':nom_bac'       => $_POST['nom_bac'] ?? '',
@@ -48,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':jour_tb'       => $_POST['jour_tb'] ?: '-'
     ]);
 
-    $message = "Consommation enregistrée avec succès !";
+    header('Location: afficher_consommation.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 
@@ -60,21 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 <main class="entry-container consumption-container">
-    <nav class="site-nav" aria-label="Navigation des fiches">
-        <a href="dashboard.php">Tableau de bord</a>
-        <a href="afficher_consommation.php">Fiche de consommation</a>
-        <a href="afficher_fiche.php">Fiche des travaux</a>
-        <a href="afficher_trafic.php">Fiche des trafics</a>
-        <a href="ajouter_bac.php">+ Ajouter des travaux</a>
-        <a href="ajouter_trafic.php">+ Ajouter un trafic</a>
-    </nav>
     <h2>Saisie - Consommation Carburant et Lubrifiants</h2>
     <?php if ($message): ?><div class="alert"><?= $message ?></div><?php endif; ?>
 
     <form method="POST">
         <div class="grid">
-            <div><label for="mois_rapport">Mois et année du rapport :</label><input id="mois_rapport" type="text" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" placeholder="Ex: SEPTEMBRE 2026" required></div>
+            <div><label for="mois_rapport">Mois et année du rapport :</label><input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required></div>
             <div><label>Item :</label><input type="text" name="item" placeholder="Ex: 01"></div>
             <div><label>Matricule :</label><input type="text" name="matricule" placeholder="Ex: A23597"></div>
             <div><label>Nom du Bac :</label><input type="text" name="nom_bac" placeholder="Ex: BANALIA"></div>
@@ -113,8 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <button type="submit">Enregistrer la consommation</button>
-        <p class="link entry-links"><a href="afficher_consommation.php?mois=<?= rawurlencode($mois_rapport) ?>">Voir le rapport complet<?= $mois_rapport !== '' ? ' - ' . htmlspecialchars($mois_rapport) : '' ?></a></p>
     </form>
 </main>
+<?php require 'footer.php'; ?>
 </body>
 </html>

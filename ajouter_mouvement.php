@@ -3,6 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO mouvement_carburant_dap (
@@ -17,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'  => $_POST['mois_rapport'] ?? 'SEPTEMBRE 2026',
+        ':mois_rapport'  => report_month_label($mois_rapport),
         ':categorie'     => $_POST['categorie'] ?? 'ENTREE',
         ':provenance'    => $_POST['provenance'] ?? '',
         ':gasoil'        => floatval($_POST['gasoil'] ?? 0),
@@ -33,34 +34,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':obs'           => $_POST['obs'] ?: '-'
     ]);
 
-    $message = "Mouvement enregistré avec succès !";
+    header('Location: afficher_mouvement.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Saisie - Mouvement Carburant & Lubrifiant (D.A.P)</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
-        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 16px; background: #0056b3; color: #fff; border: none; cursor: pointer; font-weight: bold; }
-        .alert { padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
-<body>
-<div class="container">
+<body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
+<main class="entry-container">
     <h2>Saisie - Mouvement Carburant & Lubrifiant (D.A.P)</h2>
     <?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 
     <form method="POST">
-        <div class="grid">
+        <div class="grid grid-3">
             <div>
                 <label>Mois / Année :</label>
-                <input type="text" name="mois_rapport" value="SEPTEMBRE 2026" required>
+                <input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required>
             </div>
             <div>
                 <label>Type de mouvement :</label>
@@ -76,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <div class="grid">
+        <div class="grid grid-3">
             <div><label>Gas-oil (L) :</label><input type="number" step="0.01" name="gasoil" value="0"></div>
             <div><label>Essence (L) :</label><input type="number" step="0.01" name="essence" value="0"></div>
             <div><label>SAE50 (L) :</label><input type="number" step="0.01" name="sae50" value="0"></div>
@@ -88,11 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div><label>Eau vive (L) :</label><input type="number" step="0.01" name="eau_vive" value="0"></div>
             <div><label>Anti-gel (L/Kg) :</label><input type="number" step="0.01" name="anti_gel" value="0"></div>
             <div><label>Observation :</label><input type="text" name="obs" value="-"></div>
-        </div>
+        </main>
 
         <button type="submit" class="btn">Enregistrer</button>
-        <a href="afficher_mouvement.php" style="margin-left: 15px;">Voir le rapport →</a>
     </form>
 </div>
+<?php require 'footer.php'; ?>
 </body>
 </html>

@@ -41,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Inscription - Office de Route Matériel</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-page">
+<?php require __DIR__ . '/app_header.php'; ?>
     <div class="container">
         <div class="logo">
             <div class="icon">🚢</div>
@@ -82,5 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Déjà un compte ? <a href="login.php">Se connecter</a>
         </div>
     </div>
+<?php require 'footer.php'; ?>
 </body>
 </html>

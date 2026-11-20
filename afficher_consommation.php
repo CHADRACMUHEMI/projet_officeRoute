@@ -4,7 +4,11 @@ ini_set('display_errors', 1);
 
 require_once 'db.php';
 
-$recherche_mois = $_GET['mois'] ?? 'SEPTEMBRE 2026';
+$mois_saisi = trim($_GET['mois'] ?? report_month_previous());
+$recherche_mois = report_month_label($mois_saisi);
+$mois_picker = report_month_value($mois_saisi) ?: report_month_previous();
+$fiche_courante = 'consommation';
+$periode_affichee = strtoupper($recherche_mois);
 
 $stmt = $pdo->prepare("SELECT * FROM consommation_bacs WHERE mois_rapport LIKE :mois ORDER BY item ASC, id ASC");
 $stmt->execute([':mois' => '%' . trim($recherche_mois) . '%']);
@@ -73,46 +77,34 @@ function formater_total($nombre, $unite = '') {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Consommation Carburant et Lubrifiants</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 10px; color: #000; }
-        .header-doc { text-align: center; margin-bottom: 12px; }
-        .header-doc h3 { margin: 3px 0; text-transform: uppercase; text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        th, td { border: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; }
-        th { background-color: #f2f2f2; font-weight: bold; }
-        .text-left { text-align: left; padding-left: 5px; }
-        .total-row { font-weight: bold; background-color: #eaeaea; }
-        .no-print { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 10px; border-radius: 5px; flex-wrap: wrap; gap: 10px; }
-        @media print {
-            .no-print { display: none; }
-            body { margin: 0; }
-            @page { size: landscape; }
-        }
-    </style>
+    <title>Consommation Carburant et Lubrifiants - <?= htmlspecialchars($periode_affichee) ?></title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="report-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 
-<div class="no-print">
-    <form method="GET" style="margin:0; display: flex; gap: 10px; align-items: center;">
-        <label><strong>Filtrer (Mois ou Année) :</strong></label>
-        <input type="text" name="mois" value="<?= htmlspecialchars($recherche_mois) ?>" placeholder="Ex: SEPTEMBRE ou 2026" style="padding: 5px; width: 200px;">
-        <button type="submit" style="padding: 5px 10px;">Rechercher</button>
-    </form>
-    <div>
-        <a href="dashboard.php" style="margin-right: 15px;">← Tableau de bord</a>
-        <a href="ajouter_consommation.php" style="margin-right: 15px;">+ Ajouter une ligne</a>
-        <button onclick="window.print()">Imprimer la fiche</button>
+<main class="report-container consumption-container">
+    <div class="no-print">
+        <form method="GET">
+            <label for="mois"><strong>Filtrer (Mois et année) :</strong></label>
+            <input id="mois" type="month" name="mois" value="<?= htmlspecialchars($mois_picker) ?>" required>
+            <button type="submit">Rechercher</button>
+        </form>
+        <nav class="site-nav fiche-actions" aria-label="Actions sur la fiche">
+            <a href="dupliquer_mois.php?type=consommation&source=<?= rawurlencode($recherche_mois) ?>">Préparer le mois suivant</a>
+            <a href="ajouter_consommation.php?mois=<?= rawurlencode($mois_picker) ?>">+ Ajouter une ligne</a>
+            <button class="btn-print" type="button" onclick="window.print()">Imprimer la fiche</button>
+        </nav>
     </div>
-</div>
 
-<div class="header-doc">
-    <h3>RAPPORT MODELE DMB</h3>
-    <h3>MOIS DE <?= htmlspecialchars(strtoupper($recherche_mois)) ?></h3>
-    <h3>CONSOMMATION CARBURANT ET LUBRIFIANTS</h3>
-</div>
+    <div class="header-doc">
+        <h3>RAPPORT MODELE DMB</h3>
+        <h3>MOIS DE <?= htmlspecialchars($periode_affichee) ?></h3>
+        <h3>CONSOMMATION CARBURANT ET LUBRIFIANTS</h3>
+    </div>
 
-<table>
+<div class="report-table-wrap">
+<table class="report-table consumption-table">
     <thead>
         <tr>
             <th rowspan="3" style="width: 3%;">ITEM</th>
@@ -216,6 +208,7 @@ function formater_total($nombre, $unite = '') {
         <?php endif; ?>
     </tbody>
 </table>
-
+</div>
+</main>
 </body>
 </html>

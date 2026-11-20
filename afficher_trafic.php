@@ -5,8 +5,11 @@ ini_set('display_errors', 1);
 
 require_once 'db.php';
 
-$recherche_mois = trim($_GET['mois'] ?? '');
-$periode_affichee = $recherche_mois !== '' ? strtoupper($recherche_mois) : 'TOUS LES MOIS';
+$mois_saisi = trim($_GET['mois'] ?? report_month_previous());
+$recherche_mois = report_month_label($mois_saisi);
+$mois_picker = report_month_value($mois_saisi) ?: report_month_previous();
+$fiche_courante = 'trafics';
+$periode_affichee = strtoupper($recherche_mois);
 
 $stmt = $pdo->prepare("SELECT * FROM trafics_bacs WHERE mois_rapport LIKE :mois ORDER BY item ASC");
 $stmt->execute([':mois' => '%' . trim($recherche_mois) . '%']);
@@ -21,23 +24,19 @@ $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="report-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 
 <main class="report-container">
 <div class="no-print">
     <form method="GET">
         <label for="mois"><strong>Filtrer (Mois et/ou année) :</strong></label>
-        <input id="mois" type="text" name="mois" value="<?= htmlspecialchars($recherche_mois) ?>" placeholder="Ex: SEPTEMBRE 2026">
+        <input id="mois" type="month" name="mois" value="<?= htmlspecialchars($mois_picker) ?>" required>
         <button type="submit">Rechercher</button>
     </form>
-    <nav class="site-nav" aria-label="Navigation des fiches">
-        <a href="dashboard.php">Tableau de bord</a>
-        <a href="afficher_fiche.php">Fiche des travaux</a>
-        <a href="afficher_consommation.php">Fiche de consommation</a>
+    <nav class="site-nav fiche-actions" aria-label="Actions sur la fiche">
         <a href="dupliquer_mois.php?type=trafics&source=<?= rawurlencode($recherche_mois) ?>">Préparer le mois suivant</a>
-        <a href="ajouter_trafic.php">+ Ajouter un trafic</a>
-        <a href="ajouter_bac.php">+ Ajouter des travaux</a>
-        <a href="ajouter_consommation.php">+ Ajouter une consommation</a>
-        <button type="button" onclick="window.print()">Imprimer la fiche</button>
+        <a href="ajouter_trafic.php?mois=<?= rawurlencode($mois_picker) ?>">+ Ajouter un trafic</a>
+        <button class="btn-print" type="button" onclick="window.print()">Imprimer la fiche</button>
     </nav>
 </div>
 
@@ -140,5 +139,6 @@ $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </section>
 </main>
 
+<?php require 'footer.php'; ?>
 </body>
 </html>

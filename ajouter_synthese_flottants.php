@@ -3,6 +3,8 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
+$date_situation = $_POST['date_situation'] ?? 'Situation au ' . date('d/m/Y', strtotime($mois_rapport . '-01 +1 month -1 day'));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO synthese_materiels_flottants (
@@ -15,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'   => $_POST['mois_rapport'] ?? 'SEPTEMBRE 2026',
-        ':date_situation' => $_POST['date_situation'] ?? 'Situation au 30 septembre 2026',
+        ':mois_rapport'   => report_month_label($mois_rapport),
+        ':date_situation' => $date_situation,
         ':centre_gestion' => $_POST['centre_gestion'] ?? 'CENTRE 480',
         ':province'       => $_POST['province'] ?? 'PROVINCE DE LA TSHOPO',
         ':item'           => $_POST['item'] ?? '',
@@ -26,34 +28,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':dispo_om'       => intval($_POST['dispo_om'] ?? 0)
     ]);
 
-    $message = "Ligne de synthèse enregistrée avec succès !";
+    header('Location: afficher_synthese_flottants.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Saisie - Tableau Synthétique Matériels Flottants</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 820px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
-        .full { grid-column: span 2; }
-        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
-        input { width: 100%; padding: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 16px; background: #0056b3; color: #fff; border: none; cursor: pointer; font-weight: bold; }
-        .alert { padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
-<body>
-<div class="container">
+<body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
+<main class="entry-container">
     <h2>Saisie - Tableau Synthétique des Matériels Flottants</h2>
     <?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 
     <form method="POST">
         <div class="grid">
-            <div><label>Mois / Année :</label><input type="text" name="mois_rapport" value="SEPTEMBRE 2026" required></div>
-            <div><label>Situation / Date :</label><input type="text" name="date_situation" value="Situation au 30 septembre 2026" required></div>
+            <div><label for="mois_rapport">Mois / Année :</label><input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required></div>
+            <div><label for="date_situation">Situation / Date :</label><input id="date_situation" type="text" name="date_situation" value="<?= htmlspecialchars($date_situation) ?>" required></div>
             <div><label>Centre de gestion :</label><input type="text" name="centre_gestion" value="CENTRE 480" required></div>
             <div><label>Province :</label><input type="text" name="province" value="PROVINCE DE LA TSHOPO" required></div>
 
@@ -63,11 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div><label>Dispo (OM) :</label><input type="number" name="dispo_om" value="0" min="0"></div>
             <div><label>Panne Rép (PR) :</label><input type="number" name="panne_rep_pr" value="0" min="0"></div>
             <div class="full"><label>À Déclasser (PD) :</label><input type="number" name="a_declasser_pd" value="0" min="0"></div>
-        </div>
+        </main>
 
         <button type="submit" class="btn">Enregistrer</button>
-        <a href="afficher_synthese_flottants.php" style="margin-left: 15px;">Voir le tableau synthétique →</a>
     </form>
 </div>
+<?php require 'footer.php'; ?>
 </body>
 </html>

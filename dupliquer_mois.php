@@ -22,6 +22,51 @@ $fiches = [
         'titre' => "Fiche des coûts d'exploitation",
         'table' => 'cout_exploitation_bacs',
         'colonnes' => 'item, matricule, nom_bac, recette_bac, etat_fin_mois, charge_personnel, charge_entretien, fonctionnement, total_fc, observ'
+    ],
+    'actualites' => [
+        'titre' => 'Actualités des bacs',
+        'table' => 'actualites_bacs',
+        'colonnes' => 'categorie_bac, item, code_point, matricule, nom_bac, moteur_marque, etat_b, etat_m, type_tonnage, description_pannes, travaux_executer, observation'
+    ],
+    'commentaires' => [
+        'titre' => 'Commentaires et travaux',
+        'table' => 'rapport_commentaires_travaux',
+        'colonnes' => 'section_type, titre_rubrique, contenu_texte, ordre_affichage'
+    ],
+    'inventaire' => [
+        'titre' => 'Inventaire atelier',
+        'table' => 'inventaire_materiel_atelier',
+        'colonnes' => 'famille_nom, designation, a_reformer, actif, panne, disponible, ordre_affichage'
+    ],
+    'materiel_appui' => [
+        'titre' => 'Matériel d’appui',
+        'table' => 'materiel_appui_bacs',
+        'colonnes' => 'item, categorie, marque_type, numero_or, etat_localisation, prop_declasser, prop_renouveller, observ'
+    ],
+    'mouvement' => [
+        'titre' => 'Mouvements carburant et lubrifiant',
+        'table' => 'mouvement_carburant_dap',
+        'colonnes' => 'categorie, provenance, gasoil, essence, sae50, sae40, sae10, atf, liquide_frein, graisse, eau_vive, anti_gel, obs'
+    ],
+    'mouvement_magasin' => [
+        'titre' => 'Mouvements du magasin',
+        'table' => 'mouvement_magasin_dmb003',
+        'colonnes' => 'modele_ref, item, marque_type, reference_art, designation, entree_qte, entree_prix, entree_fre_bad, sortie_qte, sortie_prix, sortie_client, sortie_nft, sortie_ds_bs, stock_initial, stock_fin_mois'
+    ],
+    'parc_flottant' => [
+        'titre' => 'Parc matériel flottant',
+        'table' => 'situation_parc_flottant',
+        'colonnes' => 'centre_gestion, province, groupe_nom, designation, a_reformer, actif, panne, disponible, ordre_affichage'
+    ],
+    'situation_parc' => [
+        'titre' => 'Situation du parc bacs',
+        'table' => 'situation_parc_bacs',
+        'colonnes' => 'province, section_etat, numero_ordre, code_point, point_passage, matricule, type_capacite, annee_fab, axe_routier, type_axe, riviere, territoire, observation'
+    ],
+    'synthese_flottants' => [
+        'titre' => 'Synthèse des matériels flottants',
+        'table' => 'synthese_materiels_flottants',
+        'colonnes' => 'date_situation, centre_gestion, province, item, designation, a_declasser_pd, panne_rep_pr, dispo_om'
     ]
 ];
 
@@ -105,15 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 <main class="entry-container">
-    <nav class="site-nav" aria-label="Navigation des fiches">
-        <a href="dashboard.php">Tableau de bord</a>
-        <a href="afficher_fiche.php">Fiche des travaux</a>
-        <a href="afficher_trafic.php">Fiche des trafics</a>
-        <a href="afficher_consommation.php">Fiche de consommation</a>
-        <a href="afficher_cout.php">Fiche des coûts</a>
-    </nav>
-
     <h2>Créer un rapport pour un nouveau mois</h2>
     <p>Cette fonction convient lorsque les données restent identiques d’un mois à l’autre : les lignes du mois source seront copiées, et l’ancien rapport restera inchangé. Choisissez un mois de destination sans données pour éviter les doublons.</p>
 
@@ -148,5 +186,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit">Copier les lignes vers le nouveau mois</button>
     </form>
 </main>
+<?php require 'footer.php'; ?>
 </body>
 </html>

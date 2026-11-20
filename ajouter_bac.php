@@ -7,7 +7,7 @@ session_start();
 require_once 'db.php'; // Votre fichier de connexion PDO ($pdo)
 
 $message = "";
-$mois_rapport = trim($_POST['mois_rapport'] ?? '');
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item = htmlspecialchars($_POST['item']);
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     if ($stmt->execute([
-        ':mois_rapport' => $mois_rapport,
+        ':mois_rapport' => report_month_label($mois_rapport),
         ':item' => $item,
         ':matricule' => $matricule,
         ':nom_bac' => $nom_bac,
@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':prochain_entretien_bb' => $prochain_entretien_bb,
         ':user_id' => $user_id
     ])) {
-        $message = "Ligne ajoutée avec succès dans le rapport !";
+        header('Location: afficher_fiche.php?mois=' . rawurlencode($mois_rapport));
+        exit;
     } else {
         $message = "Erreur lors de l'enregistrement.";
     }
@@ -71,16 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 
 <div class="entry-container">
-    <nav class="site-nav" aria-label="Navigation des fiches">
-        <a href="dashboard.php">Tableau de bord</a>
-        <a href="afficher_fiche.php">Fiche des travaux</a>
-        <a href="afficher_trafic.php">Fiche des trafics</a>
-        <a href="afficher_consommation.php">Fiche de consommation</a>
-        <a href="ajouter_trafic.php">+ Ajouter un trafic</a>
-        <a href="ajouter_consommation.php">+ Ajouter une consommation</a>
-    </nav>
     <h2>Nouvel enregistrement - Rapport DMB</h2>
     <?php if ($message): ?>
         <div class="alert"><?= $message ?></div>
@@ -90,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="grid">
             <div>
                 <label for="mois_rapport">Mois et année du rapport :</label>
-                <input id="mois_rapport" type="text" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" placeholder="Ex: SEPTEMBRE 2026" required>
+                <input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required>
             </div>
             <div>
                 <label>Item :</label>
@@ -154,8 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <button type="submit">Enregistrer dans la fiche</button>
     </form>
-    <p class="link entry-links"><a href="afficher_fiche.php?mois=<?= rawurlencode($mois_rapport) ?>">Voir la fiche complète<?= $mois_rapport !== '' ? ' - ' . htmlspecialchars($mois_rapport) : '' ?></a></p>
 </div>
 
+<?php require 'footer.php'; ?>
 </body>
 </html>

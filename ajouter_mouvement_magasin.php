@@ -3,6 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 function extraire_qte_num($txt) {
     if (!$txt) return 0.0;
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'   => $_POST['mois_rapport'] ?? 'SEPTEMBRE 2026',
+        ':mois_rapport'   => report_month_label($mois_rapport),
         ':modele_ref'     => $_POST['modele_ref'] ?? 'RAPPORT MODELE DMB 003',
         ':item'           => $_POST['item'] ?? '',
         ':marque_type'    => $_POST['marque_type'] ?: '-//-//-',
@@ -73,54 +74,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':stock_fin_mois' => $stock_fin_final
     ]);
 
-    $message = "Mouvement magasin enregistré avec succès ! (Stock fin de mois calculé : " . htmlspecialchars($stock_fin_final) . ")";
+    header('Location: afficher_mouvement_magasin.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Saisie - Mouvement Mensuel Entrées & Sorties Magasin</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 960px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-        h3 { margin-top: 20px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; font-size: 14px; color: #0056b3; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 10px; }
-        .full { grid-column: span 3; }
-        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
-        input { width: 100%; padding: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 16px; background: #0056b3; color: #fff; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .alert { padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
-<body>
-<div class="container">
+<body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
+<main class="entry-container">
     <h2>Saisie - Mouvement Mensuel Entrées & Sorties Magasin (DMB 003)</h2>
     <?php if ($message): ?><div class="alert"><?= $message ?></div><?php endif; ?>
 
     <form method="POST">
-        <div class="grid">
-            <div><label>Mois / Année :</label><input type="text" name="mois_rapport" value="SEPTEMBRE 2026" required></div>
+        <div class="grid grid-3">
+            <div><label for="mois_rapport">Mois / Année :</label><input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required></div>
             <div><label>Réf. Modèle :</label><input type="text" name="modele_ref" value="RAPPORT MODELE DMB 003" required></div>
             <div><label>Item :</label><input type="text" name="item" placeholder="Ex: 1"></div>
         </div>
 
         <h3>Identification de la marchandise</h3>
-        <div class="grid">
+        <div class="grid grid-3">
             <div><label>Marque Type :</label><input type="text" name="marque_type" value="-//-//-"></div>
             <div><label>Réf :</label><input type="text" name="reference_art" value="-"></div>
             <div><label>Désignation :</label><input type="text" name="designation" placeholder="Ex: Pompe à eau de mer + Rotor et peigne" required></div>
         </div>
 
         <h3>Mouvement en entrée</h3>
-        <div class="grid">
+        <div class="grid grid-3">
             <div><label>Qté (Entrée) :</label><input type="text" name="entree_qte" placeholder="Ex: 01 Pce ou 03 Ram" value="0"></div>
             <div><label>Prix (Entrée) :</label><input type="text" name="entree_prix" placeholder="Ex: 350 $ ou 46.000 Fc" value="-"></div>
             <div><label>Fré ou Bad :</label><input type="text" name="entree_fre_bad" value="-//-//-"></div>
         </div>
 
         <h3>Mouvement en sortie</h3>
-        <div class="grid">
+        <div class="grid grid-3">
             <div><label>Qté (Sortie) :</label><input type="text" name="sortie_qte" placeholder="Ex: 01 Pce" value="0"></div>
             <div><label>Prix (Sortie) :</label><input type="text" name="sortie_prix" placeholder="Ex: 350 $ ou 46.000 Fc" value="-"></div>
             <div><label>Client :</label><input type="text" name="sortie_client" value="OR"></div>
@@ -129,19 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <h3>Stock</h3>
-        <div class="grid">
+        <div class="grid grid-3">
             <div><label>Stock Initial :</label><input type="text" name="stock_initial" placeholder="Ex: 01 Pce" value="0"></div>
-            <div class="grid" style="grid-column: span 2; margin: 0;">
-                <div style="grid-column: span 2;">
-                    <label>Stock Fin mois (laisser AUTO pour calcul automatique) :</label>
-                    <input type="text" name="stock_fin_mois" value="AUTO">
-                </div>
+            <div class="full">
+                <label>Stock Fin mois (laisser AUTO pour calcul automatique) :</label>
+                <input type="text" name="stock_fin_mois" value="AUTO">
             </div>
-        </div>
+        </main>
 
         <button type="submit" class="btn">Enregistrer le mouvement</button>
-        <a href="afficher_mouvement_magasin.php" style="margin-left: 15px;">Voir la fiche complète →</a>
     </form>
 </div>
+<?php require 'footer.php'; ?>
 </body>
 </html>

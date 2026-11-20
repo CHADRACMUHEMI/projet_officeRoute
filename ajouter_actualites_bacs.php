@@ -3,6 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO actualites_bacs (
@@ -17,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'       => $_POST['mois_rapport'] ?? 'SEPTEMBRE 2026',
+        ':mois_rapport'       => report_month_label($mois_rapport),
         ':categorie_bac'      => $_POST['categorie_bac'] ?? 'A. BACS EN ORDRE DE MARCHE',
         ':item'               => $_POST['item'] ?? '',
         ':code_point'         => $_POST['code_point'] ?? '',
@@ -32,62 +33,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':observation'        => $_POST['observation'] ?: 'RAS'
     ]);
 
-    $message = "Fiche d'actualité du bac enregistrée avec succès !";
+    header('Location: afficher_actualites_bacs.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Saisie - Actualités des Bacs</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 920px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
-        .full { grid-column: span 3; }
-        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 6px; box-sizing: border-box; font-family: Arial, sans-serif; }
-        textarea { min-height: 65px; }
-        .btn { padding: 10px 16px; background: #0056b3; color: #fff; border: none; cursor: pointer; font-weight: bold; }
-        .alert { padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
-<body>
-<div class="container">
-    <h2>Saisie - Actualités Bacs (A. Ordre de marche / B. Pannes / C. À réformer)</h2>
-    <?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-
+<body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
+<main class="entry-container actualites-form">
+    <h2>Actualités des bacs</h2>
+    <p class="entry-intro">Renseignez la période, la catégorie et les informations du bac.</p>
+    <?php if ($message): ?>
+        <div class="alert" role="status"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
     <form method="POST">
-        <div class="grid">
-            <div><label>Mois / Année :</label><input type="text" name="mois_rapport" value="SEPTEMBRE 2026" required></div>
-            <div class="full">
-                <label>Catégorie :</label>
-                <select name="categorie_bac" required>
-                    <option value="A. BACS EN ORDRE DE MARCHE">A. BACS EN ORDRE DE MARCHE</option>
-                    <option value="B. BACS EN PANNES">B. BACS EN PANNES</option>
-                    <option value="C. BACS A REFORMER">C. BACS A REFORMER</option>
-                </select>
+        <fieldset>
+            <legend>Période et catégorie</legend>
+            <div class="grid grid-3">
+                <div>
+                    <label for="mois_rapport">Mois et année</label>
+                    <input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required>
+                </div>
+                <div class="full">
+                    <label for="categorie_bac">Catégorie</label>
+                    <select id="categorie_bac" name="categorie_bac" required>
+                        <option value="A. BACS EN ORDRE DE MARCHE">A. BACS EN ORDRE DE MARCHE</option>
+                        <option value="B. BACS EN PANNES">B. BACS EN PANNES</option>
+                        <option value="C. BACS A REFORMER">C. BACS À RÉFORMER</option>
+                    </select>
+                </div>
             </div>
+        </fieldset>
 
-            <div><label>IT. :</label><input type="text" name="item" placeholder="Ex: 01"></div>
-            <div><label>CODE :</label><input type="text" name="code_point" placeholder="Ex: 4/1"></div>
-            <div><label>MATR. :</label><input type="text" name="matricule" placeholder="Ex: A23678"></div>
+        <fieldset>
+            <legend>Identification du bac</legend>
+            <div class="grid grid-3">
+                <div>
+                    <label for="item">Item</label>
+                    <input id="item" type="text" name="item" placeholder="Ex. : 01">
+                </div>
+                <div>
+                    <label for="code_point">Code</label>
+                    <input id="code_point" type="text" name="code_point" placeholder="Ex. : 4/1">
+                </div>
+                <div>
+                    <label for="matricule">Matricule</label>
+                    <input id="matricule" type="text" name="matricule" placeholder="Ex. : A23678">
+                </div>
+                <div>
+                    <label for="nom_bac">Nom du bac</label>
+                    <input id="nom_bac" type="text" name="nom_bac" required>
+                </div>
+                <div>
+                    <label for="moteur_marque">Nombre et marque du moteur</label>
+                    <input id="moteur_marque" type="text" name="moteur_marque" placeholder="Ex. : 2 JOHN DEERE">
+                </div>
+                <div>
+                    <label for="type_tonnage">Type et tonnage</label>
+                    <input id="type_tonnage" type="text" name="type_tonnage" placeholder="Ex. : AMB 35T">
+                </div>
+            </div>
+        </fieldset>
 
-            <div><label>NOM DU BAC :</label><input type="text" name="nom_bac" required></div>
-            <div><label>NOMBRE MOTEUR ET MARQUE :</label><input type="text" name="moteur_marque" placeholder="Ex: 2 JOHN DEERE"></div>
-            <div><label>TYPE ET TONNAGE :</label><input type="text" name="type_tonnage" placeholder="Ex: AMB 35T."></div>
+        <fieldset>
+            <legend>État et interventions</legend>
+            <div class="grid grid-3">
+                <div>
+                    <label for="etat_b">État (B)</label>
+                    <input id="etat_b" type="text" name="etat_b" value="-">
+                </div>
+                <div>
+                    <label for="etat_m">État (M)</label>
+                    <input id="etat_m" type="text" name="etat_m" value="-">
+                </div>
+                <div>
+                    <label for="observation">Observation</label>
+                    <input id="observation" type="text" name="observation" value="RAS">
+                </div>
+                <div class="full">
+                    <label for="description_pannes">Description des pannes</label>
+                    <textarea id="description_pannes" name="description_pannes" rows="4"></textarea>
+                </div>
+                <div class="full">
+                    <label for="travaux_executer">Travaux à exécuter</label>
+                    <textarea id="travaux_executer" name="travaux_executer" rows="4"></textarea>
+                </div>
+            </div>
+        </fieldset>
 
-            <div><label>ETAT (B) :</label><input type="text" name="etat_b" value="-"></div>
-            <div><label>ETAT (M) :</label><input type="text" name="etat_m" value="-"></div>
-            <div><label>OBSERVATION :</label><input type="text" name="observation" value="RAS"></div>
-
-            <div class="full"><label>DESCRIPTION DES PANNES :</label><textarea name="description_pannes"></textarea></div>
-            <div class="full"><label>TRAVAUX A EXECUTER :</label><textarea name="travaux_executer"></textarea></div>
+        <div class="entry-actions">
+            <button type="submit" class="btn">Enregistrer</button>
         </div>
-
-        <button type="submit" class="btn">Enregistrer</button>
-        <a href="afficher_actualites_bacs.php" style="margin-left: 15px;">Voir la fiche complète →</a>
     </form>
-</div>
+</main>
+<?php require 'footer.php'; ?>
 </body>
 </html>

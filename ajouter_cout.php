@@ -3,7 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
-$mois_rapport = trim($_POST['mois_rapport'] ?? '');
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO cout_exploitation_bacs (
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'     => $mois_rapport,
+        ':mois_rapport'     => report_month_label($mois_rapport),
         ':item'             => $_POST['item'] ?? '',
         ':matricule'        => $_POST['matricule'] ?? '',
         ':nom_bac'          => $_POST['nom_bac'] ?? '',
@@ -31,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':observ'           => $_POST['observ'] ?: 'RAS'
     ]);
 
-    $message = "Coût d'exploitation enregistré avec succès !";
+    header('Location: afficher_cout.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 
@@ -43,23 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 <main class="entry-container">
-    <nav class="site-nav" aria-label="Navigation des fiches">
-        <a href="dashboard.php">Tableau de bord</a>
-        <a href="afficher_cout.php">Fiche des coûts</a>
-        <a href="afficher_fiche.php">Fiche des travaux</a>
-        <a href="afficher_trafic.php">Fiche des trafics</a>
-        <a href="afficher_consommation.php">Fiche de consommation</a>
-        <a href="ajouter_bac.php">+ Ajouter des travaux</a>
-        <a href="ajouter_trafic.php">+ Ajouter un trafic</a>
-        <a href="ajouter_consommation.php">+ Ajouter une consommation</a>
-    </nav>
     <h2>Saisie - Coût d'Exploitation Bacs et Tiers</h2>
     <?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 
     <form method="POST">
         <div class="grid">
-            <div><label for="mois_rapport">Mois et année du rapport :</label><input id="mois_rapport" type="text" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" placeholder="Ex: SEPTEMBRE 2026" required></div>
+            <div><label for="mois_rapport">Mois et année du rapport :</label><input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required></div>
             <div><label for="item">Item :</label><input id="item" type="text" name="item" placeholder="Ex: 01" required></div>
             <div><label for="matricule">Matricule :</label><input id="matricule" type="text" name="matricule" placeholder="Ex: A23597" required></div>
             <div><label for="nom_bac">Nom du Bac / Point de passage :</label><input id="nom_bac" type="text" name="nom_bac" placeholder="Ex: BANALIA" required></div>
@@ -74,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <button type="submit">Enregistrer le coût</button>
     </form>
-    <p class="link entry-links"><a href="afficher_cout.php?mois=<?= rawurlencode($mois_rapport) ?>">Voir le rapport complet<?= $mois_rapport !== '' ? ' - ' . htmlspecialchars($mois_rapport) : '' ?></a></p>
 </main>
+<?php require 'footer.php'; ?>
 </body>
 </html>

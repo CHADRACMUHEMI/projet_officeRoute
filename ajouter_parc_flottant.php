@@ -3,6 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once 'db.php';
 
 $message = '';
+$mois_rapport = report_month_value($_POST['mois_rapport'] ?? $_GET['mois'] ?? '') ?: report_month_previous();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO situation_parc_flottant (
@@ -15,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':mois_rapport'    => $_POST['mois_rapport'] ?? 'SEPTEMBRE 2026',
+        ':mois_rapport'    => report_month_label($mois_rapport),
         ':centre_gestion'  => $_POST['centre_gestion'] ?? 'CENTRE MATERIELS FLOTTANTS 480',
         ':province'        => $_POST['province'] ?? 'PROVINCE DE LA TSHOPO',
         ':groupe_nom'      => $_POST['groupe_nom'] ?? 'I.-BACS RFA',
@@ -27,33 +28,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':ordre_affichage' => intval($_POST['ordre_affichage'] ?? 0)
     ]);
 
-    $message = "Ligne enregistrée avec succès dans la situation du parc flottant !";
+    header('Location: afficher_parc_flottant.php?mois=' . rawurlencode($mois_rapport));
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Saisie - Situation du Parc Matériel Flottant</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 860px; margin: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
-        .full { grid-column: span 3; }
-        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 16px; background: #0056b3; color: #fff; border: none; cursor: pointer; font-weight: bold; }
-        .alert { padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
-<body>
-<div class="container">
+<body class="entry-page">
+<?php require __DIR__ . '/app_header.php'; ?>
+<main class="entry-container">
     <h2>Saisie - Situation du Parc Matériel Flottant</h2>
     <?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 
     <form method="POST">
-        <div class="grid">
-            <div><label>Mois / Année :</label><input type="text" name="mois_rapport" value="SEPTEMBRE 2026" required></div>
+        <div class="grid grid-3">
+            <div><label for="mois_rapport">Mois / Année :</label><input id="mois_rapport" type="month" name="mois_rapport" value="<?= htmlspecialchars($mois_rapport) ?>" required></div>
             <div><label>Centre de gestion :</label><input type="text" name="centre_gestion" value="CENTRE MATERIELS FLOTTANTS 480" required></div>
             <div><label>Province :</label><input type="text" name="province" value="PROVINCE DE LA TSHOPO" required></div>
 
@@ -67,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="V. BACS UNIFLOTTES">V. BACS UNIFLOTTES</option>
                     <option value="VI. UNITES FLOTTANTES">VI. UNITES FLOTTANTES</option>
                 </select>
-            </div>
+            </main>
 
             <div class="full"><label>Désignation (ex. I.1.- BACS de 35T ou VI.2 Canot rapide) :</label><input type="text" name="designation" required></div>
 
@@ -80,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <button type="submit" class="btn">Enregistrer</button>
-        <a href="afficher_parc_flottant.php" style="margin-left: 15px;">Voir la fiche complète →</a>
     </form>
 </div>
+<?php require 'footer.php'; ?>
 </body>
 </html>

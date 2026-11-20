@@ -3,7 +3,10 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 ini_set('display_errors', 1);
 require_once 'db.php';
 
-$recherche_mois = $_GET['mois'] ?? 'SEPTEMBRE 2026';
+$mois_saisi = trim($_GET['mois'] ?? report_month_previous());
+$recherche_mois = report_month_label($mois_saisi);
+$mois_picker = report_month_value($mois_saisi) ?: report_month_previous();
+$fiche_courante = 'inventaire';
 
 $stmt = $pdo->prepare("SELECT * FROM inventaire_materiel_atelier WHERE mois_rapport LIKE :mois ORDER BY ordre_affichage ASC, id ASC");
 $stmt->execute([':mois' => '%' . trim($recherche_mois) . '%']);
@@ -31,6 +34,7 @@ $gt_total = 0; $gt_ref = 0; $gt_actif = 0; $gt_panne = 0; $gt_dispo = 0;
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <title>Inventaire du Parc - Famille de Matériel</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 12px; color: #000; }
@@ -51,18 +55,20 @@ $gt_total = 0; $gt_ref = 0; $gt_actif = 0; $gt_panne = 0; $gt_dispo = 0;
         }
     </style>
 </head>
-<body>
+<body class="report-page">
+<?php require __DIR__ . '/app_header.php'; ?>
 
 <div class="no-print">
     <form method="GET" style="margin:0; display:flex; gap:10px; align-items:center;">
         <label><strong>Mois / Année :</strong></label>
-        <input type="text" name="mois" value="<?= htmlspecialchars($recherche_mois) ?>" style="padding:5px; width:200px;">
+        <input type="month" name="mois" value="<?= htmlspecialchars($mois_picker) ?>" required>
         <button type="submit" style="padding:5px 10px;">Filtrer</button>
     </form>
-    <div>
-        <a href="ajouter_inventaire_atelier.php" style="margin-right:15px;">+ Ajouter un matériel</a>
-        <button onclick="window.print()">Imprimer</button>
-    </div>
+    <nav class="site-nav fiche-actions" aria-label="Actions sur la fiche">
+        <a href="dupliquer_mois.php?type=inventaire&source=<?= rawurlencode($recherche_mois) ?>">Préparer le mois suivant</a>
+        <a href="ajouter_inventaire_atelier.php?mois=<?= rawurlencode($mois_picker) ?>" style="margin-right:15px;">+ Ajouter un matériel</a>
+        <button class="btn-print" type="button" onclick="window.print()">Imprimer</button>
+    </nav>
 </div>
 
 <div class="header-doc">
@@ -153,5 +159,6 @@ $gt_total = 0; $gt_ref = 0; $gt_actif = 0; $gt_panne = 0; $gt_dispo = 0;
     </tbody>
 </table>
 
+<?php require 'footer.php'; ?>
 </body>
 </html>
